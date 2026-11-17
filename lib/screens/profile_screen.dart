@@ -200,11 +200,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _info(Icons.person_rounded, 'Nama', nama,
                             AppColors.primary),
                         _info(Icons.school_rounded, 'Kelas', kelas,
-                            AppColors.purple),
+                            AppColors.roseDark),
                         _info(Icons.email_rounded, 'Email', email,
                             AppColors.accent),
                         const SizedBox(height: 8),
-                        const Text('Riwayat Peminjaman',
+                        const Text('Riwayat Pinjam & Kembali',
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -261,8 +261,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                             AppColors.text),
                                                   ),
                                                   Text(
-                                                    formatTanggal(
-                                                        b['borrow_date']),
+                                                    'Dipinjam: ${formatTanggal(b['borrow_date'])}',
+                                                    style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color:
+                                                            AppColors.muted),
+                                                  ),
+                                                  Text(
+                                                    b['return_date'] == null
+                                                        ? 'Belum dikembalikan'
+                                                        : 'Dikembalikan: ${formatTanggal(b['return_date'])}',
                                                     style: const TextStyle(
                                                         fontSize: 12,
                                                         color:

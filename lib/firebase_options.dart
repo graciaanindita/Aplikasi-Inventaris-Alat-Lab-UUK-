@@ -23,20 +23,11 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -50,20 +41,47 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBu03EnqqW9__0nKqvmV04XgsssLdNQ3b0',
-    appId: '1:26083051337:web:53058bda7b6662787dfc98',
-    messagingSenderId: '26083051337',
-    projectId: 'personal-finance-tracker-6cd30',
-    authDomain: 'personal-finance-tracker-6cd30.firebaseapp.com',
-    storageBucket: 'personal-finance-tracker-6cd30.firebasestorage.app',
-    measurementId: 'G-59QX4ER4VB',
+    apiKey: 'AIzaSyAvutpgJI5uwRvf9dzcI28mCFB_I-he93U',
+    appId: '1:343007095834:web:d16cc2097a45ce4f8935a3',
+    messagingSenderId: '343007095834',
+    projectId: 'inventarislabapp-f337a',
+    authDomain: 'inventarislabapp-f337a.firebaseapp.com',
+    storageBucket: 'inventarislabapp-f337a.firebasestorage.app',
+    measurementId: 'G-NKZKGXBL8P',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBcgMn2E7knFcRVJg-muR2pT_AAk6gRfiE',
-    appId: '1:26083051337:android:f74df001379e5cb47dfc98',
-    messagingSenderId: '26083051337',
-    projectId: 'personal-finance-tracker-6cd30',
-    storageBucket: 'personal-finance-tracker-6cd30.firebasestorage.app',
+    apiKey: 'AIzaSyCXZb9RvRfQI_GTkV76X0aCj7XcHAHyMkE',
+    appId: '1:343007095834:android:03d6dbe8b43c1a808935a3',
+    messagingSenderId: '343007095834',
+    projectId: 'inventarislabapp-f337a',
+    storageBucket: 'inventarislabapp-f337a.firebasestorage.app',
+  );
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyDX-bPTkikgkq-UirNCUh20EE8Bfp5pYlI',
+    appId: '1:343007095834:ios:f477402190d89cc68935a3',
+    messagingSenderId: '343007095834',
+    projectId: 'inventarislabapp-f337a',
+    storageBucket: 'inventarislabapp-f337a.firebasestorage.app',
+    iosBundleId: 'com.example.labInventory',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyDX-bPTkikgkq-UirNCUh20EE8Bfp5pYlI',
+    appId: '1:343007095834:ios:f477402190d89cc68935a3',
+    messagingSenderId: '343007095834',
+    projectId: 'inventarislabapp-f337a',
+    storageBucket: 'inventarislabapp-f337a.firebasestorage.app',
+    iosBundleId: 'com.example.labInventory',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyAvutpgJI5uwRvf9dzcI28mCFB_I-he93U',
+    appId: '1:343007095834:web:a30411b950f33a318935a3',
+    messagingSenderId: '343007095834',
+    projectId: 'inventarislabapp-f337a',
+    authDomain: 'inventarislabapp-f337a.firebaseapp.com',
+    storageBucket: 'inventarislabapp-f337a.firebasestorage.app',
+    measurementId: 'G-XZKXSPEWN2',
   );
 }

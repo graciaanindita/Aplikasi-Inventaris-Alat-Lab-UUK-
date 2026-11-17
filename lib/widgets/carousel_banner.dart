@@ -24,7 +24,7 @@ const List<_BannerData> _banners = [
     'Pinjam dengan Mudah',
     'Pilih alat, tekan Pinjam, selesai',
     'https://picsum.photos/seed/lab-banner-2/900/400',
-    AppColors.purple,
+    AppColors.roseDark,
   ),
   _BannerData(
     'Data Real-time',
@@ -92,7 +92,7 @@ class _CarouselBannerState extends State<CarouselBanner> {
               width: active ? 22 : 8,
               height: 8,
               decoration: BoxDecoration(
-                color: active ? AppColors.primary : const Color(0xFFC9D2EE),
+                color: active ? AppColors.primary : const Color(0xFFF0D8D8),
                 borderRadius: BorderRadius.circular(8),
               ),
             );

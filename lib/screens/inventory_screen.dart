@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../app_theme.dart';
@@ -6,7 +5,7 @@ import '../services/inventory_service.dart';
 import '../widgets/inventory_card.dart';
 import '../widgets/search_field.dart';
 
-/// Inventaris: daftar real-time + Tambah, Edit, Hapus, dan Peminjaman.
+/// Inventaris: daftar real-time dengan aksi Tambah, Edit, dan Hapus.
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
 
@@ -74,15 +73,32 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return null;
   }
 
-  /// Form tambah (item == null) atau edit (item berisi data barang).
+  /// Form untuk menambah barang baru atau mengedit barang yang sudah ada.
   Future<void> _tampilkanForm([Map<String, dynamic>? item]) async {
-    final editId = item?['item_id']?.toString();
+    if (item?['status'] == 'Borrowed') {
+      _snack('Barang sedang dipinjam dan tidak bisa diedit', error: true);
+      return;
+    }
+
+    final String? editId;
+    if (item == null) {
+      editId = null;
+    } else {
+      final value = item['item_id'];
+      if (value is! String || value.isEmpty) {
+        _snack('ID barang tidak valid', error: true);
+        return;
+      }
+      editId = value;
+    }
     final isEdit = editId != null;
 
     final formKey = GlobalKey<FormState>();
-    final namaC = TextEditingController(text: item?['item_name']?.toString() ?? '');
+    final namaC =
+        TextEditingController(text: item?['item_name']?.toString() ?? '');
     final kodeC = TextEditingController(text: item?['code']?.toString() ?? '');
-    final gambarC = TextEditingController(text: item?['image']?.toString() ?? '');
+    final gambarC =
+        TextEditingController(text: item?['image']?.toString() ?? '');
     final spesC =
         TextEditingController(text: item?['spesification']?.toString() ?? '');
 
@@ -93,7 +109,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
     }.toList();
     String kategori =
         kategoriLama.isNotEmpty ? kategoriLama : kCategories.first;
-    String status = item?['status'] == 'Borrowed' ? 'Borrowed' : 'Available';
 
     await showDialog<void>(
       context: context,
@@ -133,16 +148,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
                     onChanged: (v) => kategori = v ?? kategori,
                   ),
                   const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    initialValue: status,
-                    isExpanded: true,
-                    decoration: appInput('Status', Icons.fact_check_rounded),
-                    items: const ['Available', 'Borrowed']
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
-                    onChanged: (v) => status = v ?? status,
-                  ),
-                  const SizedBox(height: 12),
                   TextFormField(
                     controller: gambarC,
                     keyboardType: TextInputType.url,
@@ -177,28 +182,30 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 'item_name': namaC.text.trim(),
                 'category': kategori,
                 'code': kodeC.text.trim(),
-                'status': status,
                 'image': gambarC.text.trim(),
                 'spesification': spesC.text.trim(),
+                if (!isEdit) 'status': 'Available',
               };
               final navigator = Navigator.of(dialogContext);
               try {
-                if (editId != null) {
-                  await _service.updateItem(editId, data);
-                } else {
+                if (editId == null) {
                   await _service.addItem(data);
+                } else {
+                  await _service.updateItem(editId, data);
                 }
                 navigator.pop();
                 if (!mounted) return;
-                _snack(isEdit
-                    ? 'Barang berhasil diperbarui'
-                    : 'Barang berhasil ditambahkan');
+                _snack(
+                  isEdit
+                      ? 'Barang berhasil diperbarui'
+                      : 'Barang berhasil ditambahkan',
+                );
               } catch (e) {
                 if (!mounted) return;
                 _snack('Gagal menyimpan: $e', error: true);
               }
             },
-            child: const Text('Simpan'),
+            child: Text(isEdit ? 'Simpan' : 'Tambah'),
           ),
         ],
       ),
@@ -206,6 +213,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Future<void> _hapus(Map<String, dynamic> item) async {
+    if (item['status'] == 'Borrowed') {
+      _snack('Barang sedang dipinjam dan tidak bisa dihapus', error: true);
+      return;
+    }
+
     final ya = await _tanya(
       'Hapus Barang',
       'Yakin ingin menghapus "${item['item_name']}"?',
@@ -220,47 +232,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
     } catch (e) {
       if (!mounted) return;
       _snack('Gagal menghapus: $e', error: true);
-    }
-  }
-
-  Future<void> _pinjam(Map<String, dynamic> item) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      _snack('Silakan login terlebih dahulu', error: true);
-      return;
-    }
-    final ya = await _tanya(
-      'Pinjam Barang',
-      'Pinjam "${item['item_name']}" sekarang?',
-      'Pinjam',
-      AppColors.accent,
-    );
-    if (!ya) return;
-    try {
-      await _service.borrowItem(uid: user.uid, item: item);
-      if (!mounted) return;
-      _snack('Berhasil meminjam ${item['item_name']}');
-    } catch (e) {
-      if (!mounted) return;
-      _snack('Gagal meminjam: $e', error: true);
-    }
-  }
-
-  Future<void> _kembalikan(Map<String, dynamic> item) async {
-    final ya = await _tanya(
-      'Kembalikan Barang',
-      'Kembalikan "${item['item_name']}"?',
-      'Kembalikan',
-      AppColors.available,
-    );
-    if (!ya) return;
-    try {
-      await _service.returnItem(item['item_id'].toString());
-      if (!mounted) return;
-      _snack('${item['item_name']} sudah dikembalikan');
-    } catch (e) {
-      if (!mounted) return;
-      _snack('Gagal mengembalikan: $e', error: true);
     }
   }
 
@@ -280,10 +251,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _tampilkanForm(),
-        backgroundColor: AppColors.accent,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah'),
+        label: const Text('Tambah Produk'),
       ),
       body: Column(
         children: [
@@ -315,9 +286,11 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
                 final all = snapshot.data!;
                 if (all.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: SeedDataBox(),
+                  return const Center(
+                    child: Text(
+                      'Belum ada produk. Tekan "Tambah Produk" untuk mulai.',
+                      style: TextStyle(color: AppColors.muted),
+                    ),
                   );
                 }
 
@@ -345,13 +318,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       const SizedBox(height: 12),
                   itemBuilder: (context, i) {
                     final item = items[i];
+                    final canManage = item['status'] != 'Borrowed';
                     return InventoryCard(
                       item: item,
                       onTap: () => showItemDetail(context, item),
-                      onEdit: () => _tampilkanForm(item),
-                      onDelete: () => _hapus(item),
-                      onBorrow: () => _pinjam(item),
-                      onReturn: () => _kembalikan(item),
+                      onEdit: canManage ? () => _tampilkanForm(item) : null,
+                      onDelete: canManage ? () => _hapus(item) : null,
                     );
                   },
                 );

@@ -28,7 +28,7 @@ class AuthService {
       'kelas': kelas.trim(),
       'created_at': FieldValue.serverTimestamp(),
       'foto':
-          'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name.trim())}&background=3157D5&color=fff&size=256',
+          'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name.trim())}&background=DE7272&color=fff&size=256',
     });
   }
 

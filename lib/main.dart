@@ -43,6 +43,7 @@ class LabInventoryApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
           primary: AppColors.primary,
+          secondary: AppColors.accent,
         ),
         scaffoldBackgroundColor: AppColors.background,
         textTheme: GoogleFonts.poppinsTextTheme(),

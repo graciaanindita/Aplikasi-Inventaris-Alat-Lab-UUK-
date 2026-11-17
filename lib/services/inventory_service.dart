@@ -13,19 +13,19 @@ class InventoryService {
     'LAB-KMP-001':
         'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600',
     'LAB-KMP-002':
-        'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=600',
-    'LAB-JRG-001':
-        'https://images.unsplash.com/photo-1606904825846-647eb07f5be2?w=600',
-    'LAB-JRG-002':
-        'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=600',
-    'LAB-JRG-003':
-        'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600',
-    'LAB-ELK-001':
-        'https://images.unsplash.com/photo-1553406830-ef2513450d76?w=600',
-    'LAB-ELK-002':
-        'https://images.unsplash.com/photo-1587135991058-8816b028691f?w=600',
-    'LAB-UKR-001':
-        'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600',
+        'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600',
+    'LAB-FOT-001':
+        'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600',
+    'LAB-FOT-002':
+        'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=600',
+    'LAB-FOT-003':
+        'https://images.unsplash.com/photo-1520390138845-fd2d229dd553?w=600',
+    'LAB-AUD-001':
+        'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600',
+    'LAB-AUD-002':
+        'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600',
+    'LAB-PRN-001':
+        'https://images.unsplash.com/photo-1612198188060-c7c2a3b66eae?w=600',
     'LAB-PRS-001':
         'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=600',
   };
@@ -74,30 +74,87 @@ class InventoryService {
     required Map<String, dynamic> item,
   }) async {
     final itemId = item['item_id'].toString();
-
     final borrowRef = _db
         .collection('users')
         .doc(uid)
         .collection('borrowings')
         .doc();
+    final itemRef = _items.doc(itemId);
 
-    final batch = _db.batch();
+    await _db.runTransaction((transaction) async {
+      final itemSnapshot = await transaction.get(itemRef);
+      if (!itemSnapshot.exists) {
+        throw StateError('Barang tidak ditemukan.');
+      }
+      if (itemSnapshot.data()?['status'] != 'Available') {
+        throw StateError('Barang sedang tidak tersedia.');
+      }
+      final itemData = itemSnapshot.data()!;
 
-    batch.set(borrowRef, {
-      'borrow_id': borrowRef.id,
-      'item_id': itemId,
-      'item_name': item['item_name'],
-      'borrow_date': FieldValue.serverTimestamp(),
+      transaction.set(borrowRef, {
+        'borrow_id': borrowRef.id,
+        'item_id': itemId,
+        'item_name': itemData['item_name'],
+        'item_code': itemData['code'],
+        'borrow_date': FieldValue.serverTimestamp(),
+        'return_date': null,
+      });
+      transaction.update(itemRef, {
+        'status': 'Borrowed',
+        'borrower_uid': uid,
+      });
     });
-
-    batch.update(_items.doc(itemId), {'status': 'Borrowed'});
-
-    await batch.commit();
   }
 
   // Mengembalikan barang
-  Future<void> returnItem(String itemId) async {
-    await _items.doc(itemId).update({'status': 'Available'});
+  Future<void> returnItem({
+    required String uid,
+    required String itemId,
+  }) async {
+    final borrowings = _db
+        .collection('users')
+        .doc(uid)
+        .collection('borrowings');
+    final matchingDocs =
+        await borrowings.where('item_id', isEqualTo: itemId).get();
+    final activeDocs = matchingDocs.docs
+        .where((doc) => doc.data()['return_date'] == null)
+        .toList();
+
+    if (activeDocs.isEmpty) {
+      throw StateError('Tidak ditemukan peminjaman aktif untuk barang ini.');
+    }
+    if (activeDocs.length > 1) {
+      throw StateError('Ditemukan lebih dari satu peminjaman aktif.');
+    }
+
+    final itemRef = _items.doc(itemId);
+    final borrowingRef = activeDocs.single.reference;
+
+    await _db.runTransaction((transaction) async {
+      final itemSnapshot = await transaction.get(itemRef);
+      final borrowingSnapshot = await transaction.get(borrowingRef);
+      if (!itemSnapshot.exists || !borrowingSnapshot.exists) {
+        throw StateError('Data barang atau peminjaman tidak ditemukan.');
+      }
+
+      final itemData = itemSnapshot.data()!;
+      final borrowingData = borrowingSnapshot.data()!;
+      if (itemData['status'] != 'Borrowed' ||
+          (itemData['borrower_uid'] != null &&
+              itemData['borrower_uid'] != uid) ||
+          borrowingData['return_date'] != null) {
+        throw StateError('Status peminjaman sudah berubah.');
+      }
+
+      transaction.update(borrowingRef, {
+        'return_date': FieldValue.serverTimestamp(),
+      });
+      transaction.update(itemRef, {
+        'status': 'Available',
+        'borrower_uid': FieldValue.delete(),
+      });
+    });
   }
 
   // Riwayat peminjaman
@@ -148,66 +205,66 @@ class InventoryService {
         'spesification': 'Intel Core i5, RAM 8GB, SSD 512GB, layar 14 inci',
       },
       {
-        'item_name': 'PC Desktop Lenovo',
+        'item_name': 'Tablet Samsung Galaxy Tab',
         'category': 'Komputer',
         'code': 'LAB-KMP-002',
-        'status': 'Borrowed',
+        'status': 'Available',
         'image': _images['LAB-KMP-002']!,
-        'spesification': 'Intel Core i3, RAM 8GB, HDD 1TB, monitor 19 inci',
+        'spesification': 'Layar 11 inci, Wi-Fi, kamera depan dan belakang',
       },
       {
-        'item_name': 'Router MikroTik RB951',
-        'category': 'Jaringan',
-        'code': 'LAB-JRG-001',
+        'item_name': 'Kamera DSLR Canon EOS',
+        'category': 'Fotografi',
+        'code': 'LAB-FOT-001',
         'status': 'Available',
-        'image': _images['LAB-JRG-001']!,
-        'spesification': '5 port Ethernet, WiFi 2.4GHz, RouterOS L4',
+        'image': _images['LAB-FOT-001']!,
+        'spesification': 'Kamera DSLR, lensa kit, baterai dan tas kamera',
       },
       {
-        'item_name': 'Switch TP-Link 8 Port',
-        'category': 'Jaringan',
-        'code': 'LAB-JRG-002',
+        'item_name': 'Tripod Kamera',
+        'category': 'Fotografi',
+        'code': 'LAB-FOT-002',
         'status': 'Available',
-        'image': _images['LAB-JRG-002']!,
-        'spesification': '8 port Gigabit, unmanaged, plug and play',
+        'image': _images['LAB-FOT-002']!,
+        'spesification': 'Tripod aluminium, tinggi maksimal 160 cm',
       },
       {
-        'item_name': 'LAN Tester',
-        'category': 'Jaringan',
-        'code': 'LAB-JRG-003',
-        'status': 'Borrowed',
-        'image': _images['LAB-JRG-003']!,
-        'spesification': 'Pengujian kabel RJ45 dan RJ11, indikator LED',
-      },
-      {
-        'item_name': 'Arduino Uno R3',
-        'category': 'Elektronik',
-        'code': 'LAB-ELK-001',
+        'item_name': 'Ring Light LED',
+        'category': 'Fotografi',
+        'code': 'LAB-FOT-003',
         'status': 'Available',
-        'image': _images['LAB-ELK-001']!,
-        'spesification': 'ATmega328P, 14 pin digital, 6 pin analog, USB',
+        'image': _images['LAB-FOT-003']!,
+        'spesification': 'Ring light LED dengan pengatur kecerahan dan tripod',
       },
       {
-        'item_name': 'Raspberry Pi 4',
-        'category': 'Elektronik',
-        'code': 'LAB-ELK-002',
+        'item_name': 'Speaker Aktif',
+        'category': 'Audio',
+        'code': 'LAB-AUD-001',
         'status': 'Available',
-        'image': _images['LAB-ELK-002']!,
-        'spesification': 'Quad-core 1.5GHz, RAM 4GB, WiFi, Bluetooth',
+        'image': _images['LAB-AUD-001']!,
+        'spesification': 'Speaker aktif dengan koneksi Bluetooth dan kabel daya',
       },
       {
-        'item_name': 'Multimeter Digital',
-        'category': 'Alat Ukur',
-        'code': 'LAB-UKR-001',
+        'item_name': 'Mikrofon Wireless',
+        'category': 'Audio',
+        'code': 'LAB-AUD-002',
         'status': 'Available',
-        'image': _images['LAB-UKR-001']!,
-        'spesification': 'Mengukur tegangan, arus, dan hambatan, layar LCD',
+        'image': _images['LAB-AUD-002']!,
+        'spesification': 'Mikrofon wireless dengan receiver dan baterai',
+      },
+      {
+        'item_name': 'Printer Epson EcoTank',
+        'category': 'Komputer',
+        'code': 'LAB-PRN-001',
+        'status': 'Available',
+        'image': _images['LAB-PRN-001']!,
+        'spesification': 'Printer ink tank multifungsi untuk cetak dan scan',
       },
       {
         'item_name': 'Proyektor Epson',
         'category': 'Presentasi',
         'code': 'LAB-PRS-001',
-        'status': 'Borrowed',
+        'status': 'Available',
         'image': _images['LAB-PRS-001']!,
         'spesification': '3600 lumens, resolusi XGA, input HDMI dan VGA',
       },

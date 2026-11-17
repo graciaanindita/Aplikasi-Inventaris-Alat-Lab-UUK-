@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "26083051337",
-    "project_id": "personal-finance-tracker-6cd30",
-    "storage_bucket": "personal-finance-tracker-6cd30.firebasestorage.app"
+    "project_number": "343007095834",
+    "project_id": "inventarislabapp-f337a",
+    "storage_bucket": "inventarislabapp-f337a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:26083051337:android:f74df001379e5cb47dfc98",
+        "mobilesdk_app_id": "1:343007095834:android:f3431e3aede201998935a3",
         "android_client_info": {
-          "package_name": "com.example.lab_inventory"
+          "package_name": "com.example.aplikasi_inventaris_alat_lab"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBcgMn2E7knFcRVJg-muR2pT_AAk6gRfiE"
+          "current_key": "AIzaSyCXZb9RvRfQI_GTkV76X0aCj7XcHAHyMkE"
         }
       ],
       "services": {
@@ -26,15 +26,15 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:26083051337:android:fd6a7517eca0e4937dfc98",
+        "mobilesdk_app_id": "1:343007095834:android:03d6dbe8b43c1a808935a3",
         "android_client_info": {
-          "package_name": "com.example.personal_finance_tracker"
+          "package_name": "com.example.lab_inventory"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBcgMn2E7knFcRVJg-muR2pT_AAk6gRfiE"
+          "current_key": "AIzaSyCXZb9RvRfQI_GTkV76X0aCj7XcHAHyMkE"
         }
       ],
       "services": {

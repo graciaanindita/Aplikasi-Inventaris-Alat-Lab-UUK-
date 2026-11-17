@@ -29,6 +29,7 @@ class _MainScreenState extends State<MainScreen> {
       body: IndexedStack(index: _index, children: _pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
+          gradient: appGradient,
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withValues(alpha: 0.12),
@@ -41,9 +42,9 @@ class _MainScreenState extends State<MainScreen> {
           currentIndex: _index,
           onTap: (i) => setState(() => _index = i),
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.muted,
+          backgroundColor: Colors.transparent,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white70,
           selectedFontSize: 12,
           unselectedFontSize: 12,
           items: const [

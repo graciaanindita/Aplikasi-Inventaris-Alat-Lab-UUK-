@@ -172,6 +172,38 @@ class InventoryCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   StatusBadge(status: status),
+                  if (onBorrow != null || onReturn != null) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 32,
+                      child: status == 'Borrowed'
+                          ? OutlinedButton(
+                              onPressed: onReturn,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.borrowed,
+                                side: const BorderSide(
+                                    color: AppColors.borrowed),
+                                padding: EdgeInsets.zero,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              child: const Text('Kembalikan',
+                                  style: TextStyle(fontSize: 11)),
+                            )
+                          : ElevatedButton(
+                              onPressed: onBorrow,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.accent,
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.zero,
+                                elevation: 0,
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              child: const Text('Pinjam',
+                                  style: TextStyle(fontSize: 11)),
+                            ),
+                    ),
+                  ],
                 ],
               ),
             ),

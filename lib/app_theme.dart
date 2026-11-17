@@ -3,18 +3,19 @@ import 'package:flutter/material.dart';
 
 /// Warna-warna utama aplikasi (dipakai di semua halaman agar konsisten).
 class AppColors {
-  static const Color primary = Color(0xFF3157D5);
-  static const Color accent = Color(0xFFFF8A3D);
-  static const Color purple = Color(0xFF7C5CFC);
+  static const Color primary = Color(0xFFDE7272);
+  static const Color accent = Color(0xFFC65F68);
+  static const Color roseDark = Color(0xFFAB4E59);
+  static const Color roseMid = Color(0xFFB85D70);
   static const Color available = Color(0xFF22B07D);
   static const Color borrowed = Color(0xFFF0594F);
-  static const Color background = Color(0xFFF4F6FC);
-  static const Color text = Color(0xFF1F2A44);
-  static const Color muted = Color(0xFF6B7694);
+  static const Color background = Color(0xFFFFF7F7);
+  static const Color text = Color(0xFF3D2D2D);
+  static const Color muted = Color(0xFF8A7070);
 }
 
 const LinearGradient appGradient = LinearGradient(
-  colors: [AppColors.primary, AppColors.purple],
+  colors: [AppColors.primary, AppColors.roseDark],
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
 );
@@ -25,6 +26,9 @@ const List<String> kCategories = [
   'Elektronik',
   'Alat Ukur',
   'Presentasi',
+  'Fotografi',
+  'Audio',
+  'Percetakan',
 ];
 
 IconData categoryIcon(String c) {
@@ -39,6 +43,12 @@ IconData categoryIcon(String c) {
       return Icons.speed_rounded;
     case 'Presentasi':
       return Icons.slideshow_rounded;
+    case 'Fotografi':
+      return Icons.camera_alt_rounded;
+    case 'Audio':
+      return Icons.speaker_rounded;
+    case 'Percetakan':
+      return Icons.print_rounded;
     default:
       return Icons.science_rounded;
   }
@@ -49,13 +59,19 @@ Color categoryColor(String c) {
     case 'Komputer':
       return AppColors.primary;
     case 'Jaringan':
-      return AppColors.purple;
+      return AppColors.roseDark;
     case 'Elektronik':
       return AppColors.accent;
     case 'Alat Ukur':
-      return const Color(0xFF14A3C7);
+      return AppColors.roseMid;
     case 'Presentasi':
-      return const Color(0xFFE5528A);
+      return AppColors.roseDark;
+    case 'Fotografi':
+      return AppColors.roseMid;
+    case 'Audio':
+      return AppColors.accent;
+    case 'Percetakan':
+      return AppColors.roseDark;
     default:
       return AppColors.muted;
   }
@@ -84,8 +100,8 @@ InputDecoration appInput(String label, IconData icon, {Widget? suffix}) {
     suffixIcon: suffix,
     filled: true,
     fillColor: Colors.white,
-    border: border(const Color(0xFFDDE3F3)),
-    enabledBorder: border(const Color(0xFFDDE3F3)),
+    border: border(const Color(0xFFF0D8D8)),
+    enabledBorder: border(const Color(0xFFF0D8D8)),
     focusedBorder: border(AppColors.primary, 1.8),
     errorBorder: border(AppColors.borrowed),
     focusedErrorBorder: border(AppColors.borrowed, 1.8),
