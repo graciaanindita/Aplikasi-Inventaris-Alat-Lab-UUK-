@@ -18,10 +18,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _kelas = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  final _adminCode = TextEditingController();
   final _auth = AuthService();
 
   bool _loading = false;
   bool _hide = true;
+  bool _hideAdminCode = true;
+  String _role = AuthService.userRole;
   String? _error;
 
   @override
@@ -30,6 +33,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _kelas.dispose();
     _email.dispose();
     _password.dispose();
+    _adminCode.dispose();
     super.dispose();
   }
 
@@ -46,6 +50,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         kelas: _kelas.text,
         email: _email.text,
         password: _password.text,
+        role: _role,
+        adminCode: _role == AuthService.ownerRole ? _adminCode.text : null,
       );
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
@@ -54,6 +60,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } on FirebaseAuthException catch (e) {
       if (mounted) setState(() => _error = AuthService.pesanError(e.code));
+    } on StateError catch (e) {
+      if (mounted) setState(() => _error = e.message);
     } catch (e) {
       if (mounted) setState(() => _error = 'Terjadi kesalahan: $e');
     } finally {
@@ -72,7 +80,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             const AuthHeader(
               title: 'Buat Akun',
-              subtitle: 'Daftar untuk meminjam alat lab',
+              subtitle: 'Pilih tipe akun untuk mendaftar',
               showBack: true,
             ),
             Center(
@@ -84,18 +92,76 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     key: _formKey,
                     child: Column(
                       children: [
+                        SegmentedButton<String>(
+                          expandedInsets: EdgeInsets.zero,
+                          segments: const [
+                            ButtonSegment(
+                              value: AuthService.userRole,
+                              label: Text('User'),
+                              icon: Icon(Icons.person_outline_rounded),
+                            ),
+                            ButtonSegment(
+                              value: AuthService.ownerRole,
+                              label: Text('Owner'),
+                              icon: Icon(Icons.admin_panel_settings_outlined),
+                            ),
+                          ],
+                          selected: {_role},
+                          onSelectionChanged: _loading
+                              ? null
+                              : (selection) =>
+                                    setState(() => _role = selection.first),
+                        ),
+                        if (_role == AuthService.ownerRole) ...[
+                          const SizedBox(height: 14),
+                          TextFormField(
+                            controller: _adminCode,
+                            obscureText: _hideAdminCode,
+                            keyboardType: TextInputType.number,
+                            decoration: appInput(
+                              'Kode Admin Owner',
+                              Icons.admin_panel_settings_rounded,
+                              suffix: IconButton(
+                                icon: Icon(
+                                  _hideAdminCode
+                                      ? Icons.visibility_off_rounded
+                                      : Icons.visibility_rounded,
+                                  color: AppColors.muted,
+                                ),
+                                onPressed: () => setState(
+                                  () => _hideAdminCode = !_hideAdminCode,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (_role != AuthService.ownerRole) return null;
+                              if ((value ?? '').isEmpty) {
+                                return 'Kode admin wajib diisi untuk owner';
+                              }
+                              if (value != AuthService.ownerAdminCode) {
+                                return 'Kode admin owner tidak valid';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                        const SizedBox(height: 14),
                         TextFormField(
                           controller: _name,
                           textCapitalization: TextCapitalization.words,
-                          decoration:
-                              appInput('Nama Lengkap', Icons.person_rounded),
+                          decoration: appInput(
+                            'Nama Lengkap',
+                            Icons.person_rounded,
+                          ),
                           validator: (v) => _wajib(v, 'Nama'),
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
                           controller: _kelas,
                           decoration: appInput(
-                              'Kelas (contoh: XI RPL 1)', Icons.school_rounded),
+                            'Kelas (contoh: XI RPL 1)',
+                            Icons.school_rounded,
+                          ),
                           validator: (v) => _wajib(v, 'Kelas'),
                         ),
                         const SizedBox(height: 14),
@@ -130,7 +196,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           validator: (v) {
-                            if ((v ?? '').isEmpty) return 'Password wajib diisi';
+                            if ((v ?? '').isEmpty) {
+                              return 'Password wajib diisi';
+                            }
                             if (v!.length < 6) return 'Minimal 6 karakter';
                             return null;
                           },
@@ -146,14 +214,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.error_outline_rounded,
-                                    color: AppColors.borrowed, size: 20),
+                                const Icon(
+                                  Icons.error_outline_rounded,
+                                  color: AppColors.borrowed,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Text(_error!,
-                                      style: const TextStyle(
-                                          color: AppColors.borrowed,
-                                          fontSize: 13)),
+                                  child: Text(
+                                    _error!,
+                                    style: const TextStyle(
+                                      color: AppColors.borrowed,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -167,31 +241,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             foregroundColor: Colors.white,
                             minimumSize: const Size.fromHeight(52),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                           child: _loading
                               ? const SizedBox(
                                   width: 22,
                                   height: 22,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2.5, color: Colors.white))
-                              : const Text('Daftar',
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Daftar',
                                   style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600)),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                         const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text('Sudah punya akun?',
-                                style: TextStyle(color: AppColors.muted)),
+                            const Text(
+                              'Sudah punya akun?',
+                              style: TextStyle(color: AppColors.muted),
+                            ),
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('Login',
-                                  style: TextStyle(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w700)),
+                              child: const Text(
+                                'Login',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
                           ],
                         ),

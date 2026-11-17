@@ -31,6 +31,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  //pop up konfirmasi logout
   Future<void> _logout() async {
     final navigator = Navigator.of(context);
     final ya = await showDialog<bool>(
@@ -38,8 +39,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: const Text('Logout',
-            style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Logout',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         content: const Text('Yakin ingin keluar dari akun?'),
         actions: [
           TextButton(
@@ -49,8 +52,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.borrowed,
-                foregroundColor: Colors.white),
+              backgroundColor: AppColors.borrowed,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('Logout'),
           ),
         ],
@@ -95,15 +99,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 12, color: AppColors.muted)),
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 12, color: AppColors.muted),
+                ),
                 const SizedBox(height: 2),
-                Text(nilai,
-                    style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.text)),
+                Text(
+                  nilai,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
               ],
             ),
           ),
@@ -127,8 +135,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('Gagal memuat profil.\n\n${snapshot.error}',
-                    textAlign: TextAlign.center),
+                child: Text(
+                  'Gagal memuat profil.\n\n${snapshot.error}',
+                  textAlign: TextAlign.center,
+                ),
               ),
             );
           }
@@ -140,6 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final nama = (data['name'] ?? '-').toString();
           final kelas = (data['kelas'] ?? '-').toString();
           final email = (data['email'] ?? user.email ?? '-').toString();
+          final role = data['role'] == AuthService.ownerRole ? 'Owner' : 'User';
           final foto = (data['foto'] ?? '').toString();
           final inisial = nama.isNotEmpty && nama != '-'
               ? nama.characters.first.toUpperCase()
@@ -151,11 +162,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 width: double.infinity,
                 padding: EdgeInsets.fromLTRB(
-                    24, MediaQuery.of(context).padding.top + 28, 24, 32),
+                  24,
+                  MediaQuery.of(context).padding.top + 28,
+                  24,
+                  32,
+                ),
                 decoration: const BoxDecoration(
                   gradient: appGradient,
-                  borderRadius:
-                      BorderRadius.vertical(bottom: Radius.circular(36)),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(36),
+                  ),
                 ),
                 child: Column(
                   children: [
@@ -165,27 +181,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: CircleAvatar(
                         radius: 48,
                         backgroundColor: AppColors.accent,
-                        foregroundImage:
-                            foto.isNotEmpty ? NetworkImage(foto) : null,
-                        onForegroundImageError:
-                            foto.isNotEmpty ? (error, stack) {} : null,
-                        child: Text(inisial,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 36,
-                                fontWeight: FontWeight.w700)),
+                        foregroundImage: foto.isNotEmpty
+                            ? NetworkImage(foto)
+                            : null,
+                        onForegroundImageError: foto.isNotEmpty
+                            ? (error, stack) {}
+                            : null,
+                        child: Text(
+                          inisial,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Text(nama,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700)),
+                    Text(
+                      nama,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(email,
-                        style: const TextStyle(
-                            color: Colors.white70, fontSize: 13)),
+                    Text(
+                      email,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -197,54 +225,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _info(Icons.person_rounded, 'Nama', nama,
-                            AppColors.primary),
-                        _info(Icons.school_rounded, 'Kelas', kelas,
-                            AppColors.roseDark),
-                        _info(Icons.email_rounded, 'Email', email,
-                            AppColors.accent),
-                        const SizedBox(height: 8),
-                        const Text('Riwayat Pinjam & Kembali',
+                        _info(
+                          Icons.person_rounded,
+                          'Nama',
+                          nama,
+                          AppColors.primary,
+                        ),
+                        _info(
+                          Icons.school_rounded,
+                          'Kelas',
+                          kelas,
+                          AppColors.roseDark,
+                        ),
+                        _info(
+                          Icons.email_rounded,
+                          'Email',
+                          email,
+                          AppColors.accent,
+                        ),
+                        _info(
+                          Icons.badge_rounded,
+                          'Tipe Akun',
+                          role,
+                          AppColors.primary,
+                        ),
+                        if (role == 'User') ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Riwayat Pinjam & Kembali',
                             style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.text)),
-                        const SizedBox(height: 10),
-                        StreamBuilder<List<Map<String, dynamic>>>(
-                          stream: _borrowStream,
-                          builder: (context, snap) {
-                            final list = snap.data ?? [];
-                            if (list.isEmpty) {
-                              return Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: const Text(
-                                  'Belum ada riwayat peminjaman',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(color: AppColors.muted),
-                                ),
-                              );
-                            }
-                            return Column(
-                              children: list
-                                  .map((b) => Container(
-                                        margin:
-                                            const EdgeInsets.only(bottom: 10),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.text,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          StreamBuilder<List<Map<String, dynamic>>>(
+                            stream: _borrowStream,
+                            builder: (context, snap) {
+                              final list = snap.data ?? [];
+                              if (list.isEmpty) {
+                                return Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Text(
+                                    'Belum ada riwayat peminjaman',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: AppColors.muted),
+                                  ),
+                                );
+                              }
+                              return Column(
+                                children: list
+                                    .map(
+                                      (b) => Container(
+                                        margin: const EdgeInsets.only(
+                                          bottom: 10,
+                                        ),
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(14),
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
                                         ),
                                         child: Row(
                                           children: [
                                             const Icon(
-                                                Icons.history_rounded,
-                                                color: AppColors.accent),
+                                              Icons.history_rounded,
+                                              color: AppColors.accent,
+                                            ),
                                             const SizedBox(width: 12),
                                             Expanded(
                                               child: Column(
@@ -255,50 +309,61 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                     (b['item_name'] ?? '-')
                                                         .toString(),
                                                     style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color:
-                                                            AppColors.text),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color: AppColors.text,
+                                                    ),
                                                   ),
                                                   Text(
                                                     'Dipinjam: ${formatTanggal(b['borrow_date'])}',
                                                     style: const TextStyle(
-                                                        fontSize: 12,
-                                                        color:
-                                                            AppColors.muted),
+                                                      fontSize: 12,
+                                                      color: AppColors.muted,
+                                                    ),
                                                   ),
                                                   Text(
                                                     b['return_date'] == null
                                                         ? 'Belum dikembalikan'
                                                         : 'Dikembalikan: ${formatTanggal(b['return_date'])}',
-                                                    style: const TextStyle(
-                                                        fontSize: 12,
-                                                        color:
-                                                            AppColors.muted),
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color:
+                                                          b['return_date'] ==
+                                                              null
+                                                          ? const Color.fromARGB(255, 189, 56, 56)
+                                                          : AppColors.muted,
+                                                    ),
                                                   ),
                                                 ],
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ))
-                                  .toList(),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 14),
+                                      ),
+                                    )
+                                    .toList(),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                        ],
                         ElevatedButton.icon(
                           onPressed: _logout,
                           icon: const Icon(Icons.logout_rounded),
-                          label: const Text('Logout',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w600)),
+                          label: const Text(
+                            'Logout',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.borrowed,
                             foregroundColor: Colors.white,
                             minimumSize: const Size.fromHeight(52),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
                           ),
                         ),
                       ],

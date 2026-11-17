@@ -7,7 +7,9 @@ import '../widgets/search_field.dart';
 
 /// Inventaris: daftar real-time dengan aksi Tambah, Edit, dan Hapus.
 class InventoryScreen extends StatefulWidget {
-  const InventoryScreen({super.key});
+  final bool isOwner;
+
+  const InventoryScreen({super.key, required this.isOwner});
 
   @override
   State<InventoryScreen> createState() => _InventoryScreenState();
@@ -15,8 +17,8 @@ class InventoryScreen extends StatefulWidget {
 
 class _InventoryScreenState extends State<InventoryScreen> {
   final InventoryService _service = InventoryService();
-  late final Stream<List<Map<String, dynamic>>> _stream =
-      _service.itemsStream();
+  late final Stream<List<Map<String, dynamic>>> _stream = _service
+      .itemsStream();
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
 
@@ -36,7 +38,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
     );
   }
 
-  Future<bool> _tanya(String judul, String pesan, String ya, Color warna) async {
+  Future<bool> _tanya(
+    String judul,
+    String pesan,
+    String ya,
+    Color warna,
+  ) async {
     final hasil = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -52,7 +59,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             style: ElevatedButton.styleFrom(
-                backgroundColor: warna, foregroundColor: Colors.white),
+              backgroundColor: warna,
+              foregroundColor: Colors.white,
+            ),
             child: Text(ya),
           ),
         ],
@@ -61,8 +70,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
     return hasil ?? false;
   }
 
-  String? _wajib(String? v) =>
-      (v ?? '').trim().isEmpty ? 'Wajib diisi' : null;
+  String? _wajib(String? v) => (v ?? '').trim().isEmpty ? 'Wajib diisi' : null;
 
   String? _url(String? v) {
     final t = (v ?? '').trim();
@@ -75,6 +83,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   /// Form untuk menambah barang baru atau mengedit barang yang sudah ada.
   Future<void> _tampilkanForm([Map<String, dynamic>? item]) async {
+    if (!widget.isOwner) {
+      _snack('Hanya owner yang dapat mengelola inventaris', error: true);
+      return;
+    }
     if (item?['status'] == 'Borrowed') {
       _snack('Barang sedang dipinjam dan tidak bisa diedit', error: true);
       return;
@@ -94,29 +106,35 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final isEdit = editId != null;
 
     final formKey = GlobalKey<FormState>();
-    final namaC =
-        TextEditingController(text: item?['item_name']?.toString() ?? '');
+    final namaC = TextEditingController(
+      text: item?['item_name']?.toString() ?? '',
+    );
     final kodeC = TextEditingController(text: item?['code']?.toString() ?? '');
-    final gambarC =
-        TextEditingController(text: item?['image']?.toString() ?? '');
-    final spesC =
-        TextEditingController(text: item?['spesification']?.toString() ?? '');
+    final gambarC = TextEditingController(
+      text: item?['image']?.toString() ?? '',
+    );
+    final spesC = TextEditingController(
+      text: item?['spesification']?.toString() ?? '',
+    );
 
     final kategoriLama = item?['category']?.toString() ?? '';
     final daftarKategori = <String>{
       ...kCategories,
       if (kategoriLama.isNotEmpty) kategoriLama,
     }.toList();
-    String kategori =
-        kategoriLama.isNotEmpty ? kategoriLama : kCategories.first;
+    String kategori = kategoriLama.isNotEmpty
+        ? kategoriLama
+        : kCategories.first;
 
     await showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: Text(isEdit ? 'Edit Barang' : 'Tambah Barang',
-            style: const TextStyle(fontWeight: FontWeight.w700)),
+        title: Text(
+          isEdit ? 'Edit Barang' : 'Tambah Barang',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
         content: SizedBox(
           width: 420,
           child: SingleChildScrollView(
@@ -127,8 +145,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 children: [
                   TextFormField(
                     controller: namaC,
-                    decoration:
-                        appInput('Nama Barang', Icons.inventory_2_rounded),
+                    decoration: appInput(
+                      'Nama Barang',
+                      Icons.inventory_2_rounded,
+                    ),
                     validator: _wajib,
                   ),
                   const SizedBox(height: 12),
@@ -151,15 +171,20 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   TextFormField(
                     controller: gambarC,
                     keyboardType: TextInputType.url,
-                    decoration: appInput('Link URL Gambar', Icons.image_rounded),
+                    decoration: appInput(
+                      'Link URL Gambar',
+                      Icons.image_rounded,
+                    ),
                     validator: _url,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: spesC,
                     maxLines: 3,
-                    decoration:
-                        appInput('Spesifikasi', Icons.description_rounded),
+                    decoration: appInput(
+                      'Spesifikasi',
+                      Icons.description_rounded,
+                    ),
                     validator: _wajib,
                   ),
                 ],
@@ -174,8 +199,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
               if (!formKey.currentState!.validate()) return;
               final data = {
@@ -213,6 +239,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   Future<void> _hapus(Map<String, dynamic> item) async {
+    if (!widget.isOwner) {
+      _snack('Hanya owner yang dapat mengelola inventaris', error: true);
+      return;
+    }
     if (item['status'] == 'Borrowed') {
       _snack('Barang sedang dipinjam dan tidak bisa dihapus', error: true);
       return;
@@ -239,8 +269,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inventaris',
-            style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Inventaris',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         foregroundColor: Colors.white,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -249,13 +281,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
           decoration: const BoxDecoration(gradient: appGradient),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _tampilkanForm(),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Tambah Produk'),
-      ),
+      floatingActionButton: widget.isOwner
+          ? FloatingActionButton.extended(
+              onPressed: () => _tampilkanForm(),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Tambah Produk'),
+            )
+          : null,
       body: Column(
         children: [
           Padding(
@@ -286,10 +320,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
                 final all = snapshot.data!;
                 if (all.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Text(
-                      'Belum ada produk. Tekan "Tambah Produk" untuk mulai.',
-                      style: TextStyle(color: AppColors.muted),
+                      widget.isOwner
+                          ? 'Belum ada produk. Tekan "Tambah Produk" untuk mulai.'
+                          : 'Belum ada produk.',
+                      style: const TextStyle(color: AppColors.muted),
                     ),
                   );
                 }
@@ -306,11 +342,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
                 if (items.isEmpty) {
                   return const Center(
-                    child: Text('Tidak ada data yang cocok',
-                        style: TextStyle(color: AppColors.muted)),
+                    child: Text(
+                      'Tidak ada data yang cocok',
+                      style: TextStyle(color: AppColors.muted),
+                    ),
                   );
                 }
-
+                // Daftar inventaris
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                   itemCount: items.length,
@@ -318,7 +356,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       const SizedBox(height: 12),
                   itemBuilder: (context, i) {
                     final item = items[i];
-                    final canManage = item['status'] != 'Borrowed';
+                    final canManage =
+                        widget.isOwner && item['status'] != 'Borrowed';
                     return InventoryCard(
                       item: item,
                       onTap: () => showItemDetail(context, item),

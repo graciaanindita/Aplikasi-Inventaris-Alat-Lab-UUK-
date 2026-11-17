@@ -3,6 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 /// Mengurus Firebase Authentication dan profil pengguna di Firestore.
 class AuthService {
+  static const String userRole = 'user';
+  static const String ownerRole = 'owner';
+  static const String ownerAdminCode = '301210';
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
@@ -14,7 +18,16 @@ class AuthService {
     required String kelas,
     required String email,
     required String password,
+    required String role,
+    String? adminCode,
   }) async {
+    if (role != userRole && role != ownerRole) {
+      throw ArgumentError.value(role, 'role', 'Role tidak valid.');
+    }
+    if (role == ownerRole && adminCode != ownerAdminCode) {
+      throw StateError('Kode admin owner tidak valid.');
+    }
+
     final cred = await _auth.createUserWithEmailAndPassword(
       email: email.trim(),
       password: password,
@@ -26,6 +39,7 @@ class AuthService {
       'name': name.trim(),
       'email': email.trim(),
       'kelas': kelas.trim(),
+      'role': role,
       'created_at': FieldValue.serverTimestamp(),
       'foto':
           'https://ui-avatars.com/api/?name=${Uri.encodeComponent(name.trim())}&background=DE7272&color=fff&size=256',

@@ -1,12 +1,34 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import 'auth_service.dart';
 
 DateTime _waktu(dynamic v) => v is Timestamp ? v.toDate() : DateTime.now();
 
 class InventoryService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   CollectionReference<Map<String, dynamic>> get _items =>
       _db.collection('items');
+
+  DocumentReference<Map<String, dynamic>> _ownerProfileRef() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) {
+      throw StateError('Silakan login terlebih dahulu.');
+    }
+    return _db.collection('users').doc(uid);
+  }
+
+  Future<void> _requireOwner(
+    Transaction transaction,
+    DocumentReference<Map<String, dynamic>> userRef,
+  ) async {
+    final user = await transaction.get(userRef);
+    if (user.data()?['role'] != AuthService.ownerRole) {
+      throw StateError('Hanya owner yang dapat mengelola inventaris.');
+    }
+  }
 
   // URL foto barang
   final Map<String, String> _images = {
@@ -49,23 +71,53 @@ class InventoryService {
 
   // Menambahkan barang
   Future<void> addItem(Map<String, dynamic> data) async {
+    final userRef = _ownerProfileRef();
     final ref = _items.doc();
 
-    await ref.set({
-      'item_id': ref.id,
-      ...data,
-      'created_at': FieldValue.serverTimestamp(),
+    await _db.runTransaction((transaction) async {
+      await _requireOwner(transaction, userRef);
+      transaction.set(ref, {
+        'item_id': ref.id,
+        ...data,
+        'created_at': FieldValue.serverTimestamp(),
+      });
     });
   }
 
   // Mengedit barang
   Future<void> updateItem(String itemId, Map<String, dynamic> data) async {
-    await _items.doc(itemId).update(data);
+    final userRef = _ownerProfileRef();
+    final itemRef = _items.doc(itemId);
+
+    await _db.runTransaction((transaction) async {
+      await _requireOwner(transaction, userRef);
+      final itemSnapshot = await transaction.get(itemRef);
+      if (!itemSnapshot.exists) {
+        throw StateError('Barang tidak ditemukan.');
+      }
+      if (itemSnapshot.data()?['status'] == 'Borrowed') {
+        throw StateError('Barang sedang dipinjam dan tidak bisa diedit.');
+      }
+      transaction.update(itemRef, data);
+    });
   }
 
   // Menghapus barang
   Future<void> deleteItem(String itemId) async {
-    await _items.doc(itemId).delete();
+    final userRef = _ownerProfileRef();
+    final itemRef = _items.doc(itemId);
+
+    await _db.runTransaction((transaction) async {
+      await _requireOwner(transaction, userRef);
+      final itemSnapshot = await transaction.get(itemRef);
+      if (!itemSnapshot.exists) {
+        throw StateError('Barang tidak ditemukan.');
+      }
+      if (itemSnapshot.data()?['status'] == 'Borrowed') {
+        throw StateError('Barang sedang dipinjam dan tidak bisa dihapus.');
+      }
+      transaction.delete(itemRef);
+    });
   }
 
   // Meminjam barang
